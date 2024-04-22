@@ -1,22 +1,9 @@
-import {Db, MongoClient} from 'mongodb';
+import {MongoClient} from 'mongodb';
 
-let db: Db;
 
-export const connectDB = async () => {
-    try {
-        const client = new MongoClient('mongodb://localhost:27017');
-        await client.connect();
-        console.log("Connected successfully to MongoDB server");
-        db = client.db('test');
-    } catch (error) {
-        console.error("Could not connect to MongoDB", error);
-        process.exit(1);
-    }
-}
+export const client = new MongoClient('mongodb://localhost:27017');
+client.connect();
 
-export const getDB = () => {
-    if (!db) {
-        throw new Error("Call connectDB first");
-    }
-    return db;
-}
+export const db = client.db('WikiSU');
+export const document = db.collection('Documents');
+
