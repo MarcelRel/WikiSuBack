@@ -1,6 +1,8 @@
-import {DocumentEntity} from "../types/document";
+import {DocumentEntity} from "../types";
 import {v4 as uuid} from 'uuid';
 import {ValidationError} from "../utils/errors";
+import {document} from "../utils/db";
+import {ObjectId} from "mongodb";
 
 interface NewDocumentEntity extends Omit<DocumentEntity, 'id' | 'creationDate'> {
     id?: string;
@@ -15,7 +17,6 @@ export class DocumentRecord implements DocumentEntity {
     creationUser: string;
     modificationDate: Date;
     modificationUser: string;
-
     constructor(obj: NewDocumentEntity) {
         if(!obj.id) {
             this.id = uuid();
@@ -33,6 +34,15 @@ export class DocumentRecord implements DocumentEntity {
         this.modificationDate = obj.modificationDate || new Date();
         this.modificationUser = obj.modificationUser;
 
+    }
+
+    static async getOne(id: string) {
+        const item = await document.findOne({_id: new ObjectId(String(id))});
+        return item === null ? null: item;
+    }
+
+    static async findAll() {
+        return await document.find().toArray();
     }
 
 }
