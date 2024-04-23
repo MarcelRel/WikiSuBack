@@ -1,26 +1,21 @@
 import {DocumentEntity} from "../types";
-import {v4 as uuid} from 'uuid';
 import {ValidationError} from "../utils/errors";
 import {document} from "../utils/db";
 import {ObjectId} from "mongodb";
 
 interface NewDocumentEntity extends Omit<DocumentEntity, 'id' | 'creationDate'> {
-    id?: string;
     creationDate?: Date;
 }
 
 export class DocumentRecord implements DocumentEntity {
-    id: string;
     title: string;
     content: string;
     creationDate: Date;
     creationUser: string;
     modificationDate: Date;
     modificationUser: string;
+    category: string;
     constructor(obj: NewDocumentEntity) {
-        if(!obj.id) {
-            this.id = uuid();
-        }
         if(!obj.title || obj.title.length > 100) {
             throw new ValidationError('Title is required and must be less than 100 characters');
         }
@@ -33,6 +28,7 @@ export class DocumentRecord implements DocumentEntity {
         this.creationUser = obj.creationUser;
         this.modificationDate = obj.modificationDate || new Date();
         this.modificationUser = obj.modificationUser;
+        this.category = obj.category;
 
     }
 
@@ -44,5 +40,31 @@ export class DocumentRecord implements DocumentEntity {
     static async findAll() {
         return await document.find().toArray();
     }
+
+    static async insert(record: DocumentRecord) {
+        await document.insertOne(record);
+    }
+
+    static async update(id: string, record: DocumentRecord) {
+        const documentRecord = await DocumentRecord.getOne(id);
+        if(documentRecord === null) {
+            throw new ValidationError('Document not found');
+        }
+
+        await document.replaceOne({_id: new ObjectId(id)}, {
+            ...documentRecord,
+            title: String(record.title),
+            content: String(record.content),
+            category: String(record.category),
+            modificationDate: new Date(),
+            modificationUser: String(record.modificationUser),
+
+        });
+    }
+
+    static async delete(id: string) {
+        await document.deleteOne({_id: new ObjectId(id)});
+    }
+
 
 }
